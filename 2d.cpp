@@ -14,8 +14,8 @@ struct Vtx {
 enum { ATTRIB_POS, ATTRIB_COLOR };
 
 const GLfloat PI = 3.14159265f;
-const GLuint cPoints = 500; //number of vertices to represents one circle
-GLuint totalPoints = 10 * cPoints; //1 sun + 8 planets + 1 moon
+const GLuint cPoints = 300; //number of vertices to represents one circle
+GLuint totalPoints = (int) 10 * cPoints; //1 sun + 8 planets + 1 moon
 
 //Colors are in BGR order
 const GLuint RED =  0x0000FF;
@@ -124,6 +124,14 @@ bool loadShaderSource(GLuint shader, const char *filePath) {
 	return true;
 }
 
+void createObjects(Vtx *t) {
+
+}
+
+void createCircle(Vtx *t, GLuint start, GLuint end, GLuint color1, GLuint color2) {
+
+}
+
 int main() {
 	if ( !glfwInit() ) {
 		cerr << "Unable to initialize OpenGL!\n";
@@ -177,7 +185,9 @@ int main() {
 	fragShader = 0;
 	vtxShader = 0;
 	
-	const GLfloat rectWidth = 0.2, rectHeight = 0.2;
+	//Delete this code block later
+	
+	const GLfloat rectWidth = 0.1, rectHeight = 0.1;
 	Vtx vertices[] = { //Colors are in BGR order
 		{-rectWidth, rectHeight,RED},  //Upper Left is Red
 		{-rectWidth, -rectHeight,GREEN}, //Lower Left is Green
@@ -187,7 +197,11 @@ int main() {
 		{0, 0.15,RED},
 		{-0.15, -0.15,PURPLE},
 		{0.15, -0.15,ORANGE}
-	};	
+	};
+	
+
+	//Vtx vertices[totalPoints];
+	//createObjects(vertices);
 	
 	glEnableVertexAttribArray(ATTRIB_POS);
 	glEnableVertexAttribArray(ATTRIB_COLOR);
@@ -219,16 +233,18 @@ int main() {
 		translation.setTranslation(0.4,0.4);
 		rotate.setRotation(0,0,t);
 		revolve.setRotation(0,0,t2);
-		transform = revolve * translation * rotate;		
-		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-		transform = rotate;
+		//transform.setIdentity();
+		transform = rotate * translation * revolve;
 		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
 		glDrawArrays(GL_TRIANGLE_STRIP, 4, 3);
 
+		transform = rotate * translation * rotate * transform;		
+		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
 		glfwSwapBuffers();
-		t += 0.06f;
+		t += 0.02f;
 	} while ( glfwGetKey(GLFW_KEY_ESC) != GLFW_PRESS && glfwGetWindowParam(GLFW_OPENED) );
 	glfwTerminate();
 	
