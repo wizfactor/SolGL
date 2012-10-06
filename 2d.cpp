@@ -13,6 +13,18 @@ struct Vtx {
 
 enum { ATTRIB_POS, ATTRIB_COLOR };
 
+const GLfloat PI = 3.14159265f;
+const GLuint cPoints = 500; //number of vertices to represents one circle
+GLuint totalPoints = 10 * cPoints; //1 sun + 8 planets + 1 moon
+
+//Colors are in BGR order
+const GLuint RED =  0x0000FF;
+const GLuint BLUE = 0xFF0000;
+const GLuint GREEN = 0x00FF00;
+const GLuint YELLOW = 0x00FFFF;
+const GLuint ORANGE = 0x3366FF;
+const GLuint PURPLE = 0x660066;
+
 struct GLMatrix3 {
 	GLfloat mat[9];
 	
@@ -117,7 +129,7 @@ int main() {
 		cerr << "Unable to initialize OpenGL!\n";
 		return -1;
 	}
-	if ( !glfwOpenWindow(640,640,
+	if ( !glfwOpenWindow(850,850,
 						 8,8,8,8,
 						 0,0,
 						 GLFW_WINDOW) ) {
@@ -167,10 +179,14 @@ int main() {
 	
 	const GLfloat rectWidth = 0.2, rectHeight = 0.2;
 	Vtx vertices[] = { //Colors are in BGR order
-		{-rectWidth, rectHeight,0x0000FF},  //Upper Left is Red
-		{-rectWidth, -rectHeight,0x00FF00}, //Lower Left is Green
-		{rectWidth, rectHeight,0xFF0000},	//Upper Right is Blue
-		{rectWidth, -rectHeight,0x00FFFF}	//Lower Right is Yellow
+		{-rectWidth, rectHeight,RED},  //Upper Left is Red
+		{-rectWidth, -rectHeight,GREEN}, //Lower Left is Green
+		{rectWidth, rectHeight,BLUE},	//Upper Right is Blue
+		{rectWidth, -rectHeight,YELLOW},	//Lower Right is Yellow
+
+		{0, 0.15,RED},
+		{-0.15, -0.15,PURPLE},
+		{0.15, -0.15,ORANGE}
 	};	
 	
 	glEnableVertexAttribArray(ATTRIB_POS);
@@ -200,20 +216,17 @@ int main() {
 
 		GLfloat t2 = t / 4;
 
-		transform.setIdentity();
 		translation.setTranslation(0.4,0.4);
 		rotate.setRotation(0,0,t);
 		revolve.setRotation(0,0,t2);
-
-		
-		transform = revolve * translation * rotate;
-		
-
+		transform = revolve * translation * rotate;		
 		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-
-		//Place transformation code here.
-
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+		transform = rotate;
+		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
+		glDrawArrays(GL_TRIANGLE_STRIP, 4, 3);
+
 		glfwSwapBuffers();
 		t += 0.06f;
 	} while ( glfwGetKey(GLFW_KEY_ESC) != GLFW_PRESS && glfwGetWindowParam(GLFW_OPENED) );
