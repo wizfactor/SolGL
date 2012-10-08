@@ -217,8 +217,6 @@ int main() {
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-
-	//glColorPointer(4, GL_UNSIGNED_BYTE, 8, vertices);
 	
 	GLfloat t = 0;	
 	const GLfloat x_off = .4, y_off = .4;
@@ -226,20 +224,22 @@ int main() {
 	do {
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		GLMatrix3 transform, rotate, revolve, translation;
+		GLMatrix3 transform, rotate, revolve, translation, rotateInverse;
 
 		GLfloat t2 = t / 4;
 
 		translation.setTranslation(0.4,0.4);
 		rotate.setRotation(0,0,t);
 		revolve.setRotation(0,0,t2);
+		rotateInverse.setRotation(0,0,t);
+		rotateInverse.transpose();
 
 		//transform.setIdentity();
 		transform = rotate * translation * revolve;
 		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
 		glDrawArrays(GL_TRIANGLE_STRIP, 4, 3);
 
-		transform = rotate * translation * rotate * transform;		
+		transform = transform * rotate * translation * rotate;		
 		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
