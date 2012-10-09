@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -20,10 +21,19 @@ GLuint totalPoints = (int) 10 * cPoints; //1 sun + 8 planets + 1 moon
 //Colors are in BGR order
 const GLuint RED =  0x0000FF;
 const GLuint BLUE = 0xFF0000;
+const GLuint DARK_BLUE = 0x000099;
 const GLuint GREEN = 0x00FF00;
 const GLuint YELLOW = 0x00FFFF;
 const GLuint ORANGE = 0x3366FF;
 const GLuint PURPLE = 0x660066;
+const GLuint WHITE = 0xFFFFFF;
+const GLuint GRAY = 0x666666;
+const GLuint GOLD = 0x996600;
+const GLuint PALE_YELLOW = 0xFFFF99;
+const GLuint LIGHT_TORQUOISE = 0x33FFFFF;
+const GLuint DARK_TORQUOISE = 0x33FFFFF;
+
+const GLfloat radius = 0.2;
 
 struct GLMatrix3 {
 	GLfloat mat[9];
@@ -124,12 +134,33 @@ bool loadShaderSource(GLuint shader, const char *filePath) {
 	return true;
 }
 
-void createObjects(Vtx *t) {
+void createCircle(Vtx t[], GLuint start, GLuint end, GLfloat centX, GLfloat centY, GLuint color1, GLuint color2) {
+	GLfloat rad = 0, theta = 360 * (PI/180) / (cPoints);
 
-}
+	t[start].x = centX;
+	t[start].y = centY;
+	t[start].color = color2;
 
-void createCircle(Vtx *t, GLuint start, GLuint end, GLuint color1, GLuint color2) {
+	cout << color1 << " " << color2 << endl;
 
+	//bool alternate = true;
+
+	for(int i = start+1; i < end-2; ++i) { //USE THIS TO SHOW OBJETS ARE ROTATING
+	//for(int i = start+1; i < end; ++i) {
+		t[i].x = centX + (radius * cos(rad));
+		t[i].y = centY + (radius * sin(rad));
+		t[i].color = color1;
+
+		//cout << t[i].x << " " << t[i].y << " " << t[i].color << endl;
+
+		rad += theta;
+	}
+
+	t[end].x = centX + (radius * cos(0));
+	t[end].y = centY + (radius * sin(0));
+	t[end].color = color1;
+
+	cout << endl;
 }
 
 int main() {
@@ -183,26 +214,37 @@ int main() {
 	glDeleteShader(fragShader);
 	glDeleteShader(vtxShader);
 	fragShader = 0;
-	vtxShader = 0;
-	
-	//Delete this code block later
-	
-	const GLfloat rectWidth = 0.1, rectHeight = 0.1;
-	Vtx vertices[] = { //Colors are in BGR order
-		{-rectWidth, rectHeight,RED},  //Upper Left is Red
-		{-rectWidth, -rectHeight,GREEN}, //Lower Left is Green
-		{rectWidth, rectHeight,BLUE},	//Upper Right is Blue
-		{rectWidth, -rectHeight,YELLOW},	//Lower Right is Yellow
+	vtxShader = 0;	
 
-		{0, 0.15,RED},
-		{-0.15, -0.15,PURPLE},
-		{0.15, -0.15,ORANGE}
-	};
-	
+	Vtx vertices[cPoints * 10];
 
-	//Vtx vertices[totalPoints];
-	//createObjects(vertices);
-	
+	//Sun
+	createCircle(vertices, 0, cPoints-1, 0, 0, YELLOW, ORANGE);
+	//Mercury
+	createCircle(vertices, cPoints, (cPoints*2)-1, 0, 0, WHITE, GRAY);
+	//Venus
+	createCircle(vertices, (cPoints*2), (cPoints*3)-1, 0.25, 0, YELLOW, GOLD);
+	//Earth
+	createCircle(vertices, (cPoints*3), (cPoints*4)-1, 0.3, 0, BLUE, GREEN);
+	//Moon
+	createCircle(vertices, (cPoints*4), (cPoints*5)-1, 0.305, 0, WHITE, WHITE);
+	//Mars
+	createCircle(vertices, (cPoints*5), (cPoints*6)-1, 0.35, 0, RED, RED);
+	//Jupiter
+	createCircle(vertices, (cPoints*6), (cPoints*7)-1, 0.4, 0, YELLOW, ORANGE);
+	//Saturn
+	createCircle(vertices, (cPoints*7), (cPoints*8)-1, 0.5, 0, YELLOW, GOLD);
+	//Uranus
+	createCircle(vertices, (cPoints*8), (cPoints*9)-1, 0.65, 0, LIGHT_TORQUOISE, DARK_TORQUOISE);
+	//Neptune
+	createCircle(vertices, (cPoints*9), (cPoints*10)-1, 0.8, 0, BLUE, DARK_BLUE);
+
+	/*
+	for(int i = 0; i < cPoints; ++i) {
+		cout << vertices[i].x << " " << vertices[i].y << " " << vertices[i].color << endl;
+	}
+	*/
+
 	glEnableVertexAttribArray(ATTRIB_POS);
 	glEnableVertexAttribArray(ATTRIB_COLOR);
 
@@ -219,29 +261,56 @@ int main() {
 	glLoadIdentity();
 	
 	GLfloat t = 0;	
-	const GLfloat x_off = .4, y_off = .4;
+	const GLfloat x_off = .4, y_off = .4; 
+	GLfloat moveY = 0, moveX = 0, scaleX = 1, scaleY = 1;
 
 	do {
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		GLMatrix3 transform, rotate, revolve, translation, rotateInverse;
+		GLMatrix3 baseTransform, transform, rotate, revolve, translate, translate2, rotateInverse, scale;
 
 		GLfloat t2 = t / 4;
 
-		translation.setTranslation(0.4,0.4);
-		rotate.setRotation(0,0,t);
-		revolve.setRotation(0,0,t2);
+		translate2.translate(0.4,0.4);
+		revolve.setRotation(0,0,t);
 		rotateInverse.setRotation(0,0,t);
 		rotateInverse.transpose();
 
-		//transform.setIdentity();
-		transform = rotate * translation * revolve;
-		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_STRIP, 4, 3);
+		transform.setIdentity();
 
-		transform = transform * rotate * translation * rotate;		
+		if ( glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS ) {
+			moveY -= 0.01;
+		} else if ( glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS ) {
+			moveY += 0.01;
+		} else if (glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) {
+			moveX += 0.01;
+		} else if (glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) {
+			moveX -= 0.01;
+		} else if (glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS) {
+			scaleX -= 0.01;
+			scaleY -= 0.01;
+		} else if (glfwGetKey(GLFW_KEY_RSHIFT) == GLFW_PRESS) {
+			scaleX += 0.01;
+			scaleY += 0.01;
+		}
+
+		//The Sun
+		baseTransform.setIdentity();
+		baseTransform.scale(scaleX,scaleY);
+		baseTransform.translate(moveX,moveY);
+		glUniformMatrix3fv(MAT_ID, 1, false, baseTransform.mat);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, cPoints);	
+		
+		//Mercury
+		translate.setTranslation(0.3,0.3);
+		scale.setIdentity();
+		scale.scale(0.15,0.15);
+		rotate.setRotation(0,0,t*3);
+
+		transform.setIdentity();
+		transform = baseTransform * revolve * translate * rotate * scale;
 		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glDrawArrays(GL_TRIANGLE_FAN, cPoints, cPoints);
 
 		glfwSwapBuffers();
 		t += 0.02f;
