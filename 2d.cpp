@@ -302,7 +302,7 @@ int main() {
 		rotate.setIdentity();
 		rotate.setRotation(0,0,t*0.08);
 		translate.setIdentity();
-		translate.setTranslation(0.3,0.3);
+		translate.setTranslation(0.3,0);
 		revolve.setIdentity();
 		revolve.setRotation(0,0,t);
 
@@ -318,7 +318,7 @@ int main() {
 		rotate.setIdentity();
 		rotate.setRotation(0,0,t*2);
 		translate.setIdentity();
-		translate.setTranslation(0.4,0.4);
+		translate.setTranslation(0.4,0);
 		revolve.setIdentity();
 		revolve.setRotation(0,0,t * 0.85);
 
@@ -333,7 +333,7 @@ int main() {
 		rotate.setIdentity();
 		rotate.setRotation(0,0,t*1.9);
 		translate.setIdentity();
-		translate.setTranslation(0.55,0.55);
+		translate.setTranslation(0.55,0);
 		revolve.setIdentity();
 		revolve.setRotation(0,0,t * 0.80);
 
@@ -348,14 +348,49 @@ int main() {
 		rotate.setIdentity();
 		rotate.setRotation(0,0,t*0.8);
 		translate.setIdentity();
-		translate.setTranslation(0.25,0.25);
+		translate.setTranslation(0.25,0);
 		revolve.setIdentity();
 		revolve.setRotation(0,0,t * 0.40);
 
-		//transform.setIdentity();
 		transform = transform * revolve * translate * rotate * scale;
 		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
 		glDrawArrays(GL_TRIANGLE_FAN, cPoints*4, cPoints);
+
+		//Mars
+		scale.setIdentity();
+		scale.scale(0.19,0.19);
+		rotate.setIdentity();
+		rotate.setRotation(0,0,t*1.5);
+		translate.setIdentity();
+		translate.setTranslation(0.72,0);
+		revolve.setIdentity();
+		revolve.setRotation(0,0,t * 0.60);
+
+		transform.setIdentity();
+		transform = baseTransform * revolve * translate * rotate * scale;
+		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
+		glDrawArrays(GL_TRIANGLE_FAN, cPoints*5, cPoints);
+
+		//Jupiter
+		scale.setIdentity();
+		scale.scale(0.75,0.75);
+		rotate.setIdentity();
+		rotate.setRotation(0,0,t);
+		translate.setIdentity();
+		translate.setTranslation(1.1,0);
+		revolve.setIdentity();
+		revolve.setRotation(0,0,t * 0.60);
+
+		transform.setIdentity();
+		transform = baseTransform * revolve * translate * rotate * scale;
+		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
+		glDrawArrays(GL_TRIANGLE_FAN, cPoints*6, cPoints);
+
+		//Saturn
+
+		//Uranus
+
+		//Neptune
 		
 		glfwSwapBuffers();
 		t += 0.02f;
