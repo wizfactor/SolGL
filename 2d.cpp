@@ -276,8 +276,7 @@ int main() {
 	glLoadIdentity();
 	
 	GLfloat t = 0;	
-	const GLfloat x_off = .4, y_off = .4; 
-	GLfloat moveY = 0, moveX = 0, scaleX = 0.4, scaleY = 0.4;
+	GLfloat moveY = 0, moveX = 0, scaleX = 0.4, scaleY = 0.4, rotT = 0, delta = 10;
 
 	do {
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -290,26 +289,67 @@ int main() {
 
 		transform.setIdentity();
 
-		if ( glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS ) {
-			moveY -= 0.01;
-		} else if ( glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS ) {
-			moveY += 0.01;
-		} else if (glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) {
-			moveX += 0.01;
-		} else if (glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) {
-			moveX -= 0.01;
-		} else if (glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS) {
-			scaleX -= 0.01;
-			scaleY -= 0.01;
-		} else if (glfwGetKey(GLFW_KEY_RSHIFT) == GLFW_PRESS) {
-			scaleX += 0.01;
-			scaleY += 0.01;
+		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS) {
+			if ( glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS ) {
+				scaleX += 0.01;
+				scaleY += 0.01;
+			} 
+			if ( glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS ) {
+				if(scaleX <= 0 || scaleY <= 0) { //Scale should NOT be negative
+					scaleX = 0;
+					scaleY = 0;
+				}
+				else {
+					scaleX -= 0.01;
+					scaleY -= 0.01;
+				}
+			} 
+			if (glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) {
+				rotT += 0.01;
+			} 
+			if (glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) {
+				rotT -= 0.01;
+			}
+		}
+		else if (glfwGetKey(GLFW_KEY_LALT) == GLFW_PRESS) {
+			if (glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) {
+				if(delta <= 0) { //Time should NOT be negative
+					delta = 0;
+				} else {
+					delta -= 0.01;
+				}
+			} 
+			if (glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) {
+				delta += 0.01;
+			}
+
+		}
+		else {
+			if ( glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS ) {
+				moveY -= 0.01;
+			} 
+			if ( glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS ) {
+				moveY += 0.01;
+			} 
+			if (glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) {
+				moveX += 0.01;
+			} 
+			if (glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) {
+				moveX -= 0.01;
+			}
+		}  
+		if( glfwGetKey(GLFW_KEY_SPACE) == GLFW_PRESS) { //The Reset Button
+			moveY = 0, moveX = 0, scaleX = 0.4, scaleY = 0.4, rotT = 0, t = 0;
 		}
 
 		//The Sun
 		baseTransform.setIdentity();
 		baseTransform.scale(scaleX,scaleY);
 		baseTransform.translate(moveX,moveY);
+		rotate.setRotation(0,0,rotT);
+
+		baseTransform = rotate * baseTransform;
+
 		glUniformMatrix3fv(MAT_ID, 1, false, baseTransform.mat);
 		glDrawArrays(GL_TRIANGLE_FAN, 0, cPoints);	
 		
@@ -505,7 +545,7 @@ int main() {
 		glDrawArrays(GL_LINES, cPoints*10 + 2, 2);	
 		
 		glfwSwapBuffers();
-		t += 0.1;
+		t += delta;
 	} while ( glfwGetKey(GLFW_KEY_ESC) != GLFW_PRESS && glfwGetWindowParam(GLFW_OPENED) );
 	glfwTerminate();
 	
