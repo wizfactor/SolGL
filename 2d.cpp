@@ -145,7 +145,7 @@ void createCircle(Vtx t[], GLuint start, GLuint end, GLuint color1, GLuint color
 
 	//bool alternate = true;
 
-	//for(int i = start+1; i < end-2; ++i) { //USE THIS TO SHOW OBJETS ARE ROTATING
+	//for(int i = start+1; i < end-1; ++i) { //USE THIS TO SHOW OBJETS ARE ROTATING
 	for(int i = start+1; i < end; ++i) {
 		t[i].x = (radius * cos(rad));
 		t[i].y = (radius * sin(rad));
@@ -219,7 +219,7 @@ int main() {
 	Vtx vertices[cPoints * 10];
 
 	//Sun
-	createCircle(vertices, 0, cPoints-1, YELLOW, ORANGE);
+	createCircle(vertices, 0, cPoints-1, YELLOW, YELLOW);
 	//Mercury
 	createCircle(vertices, cPoints, (cPoints*2)-1, WHITE, GRAY);
 	//Venus
@@ -262,12 +262,14 @@ int main() {
 	
 	GLfloat t = 0;	
 	const GLfloat x_off = .4, y_off = .4; 
-	GLfloat moveY = 0, moveX = 0, scaleX = 1, scaleY = 1;
+	GLfloat moveY = 0, moveX = 0, scaleX = 0.4, scaleY = 0.4;
 
 	do {
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		GLMatrix3 baseTransform, transform, rotate, revolve, translate, translate2, rotateInverse, scale;
+		GLMatrix3 baseTransform, transform, rotate, revolve, translate, scale,
+			moonScale, moonTranslate, moonRotate, moonRevolve;
+
 
 		GLfloat t2 = t / 4;
 
@@ -300,11 +302,11 @@ int main() {
 		scale.setIdentity();
 		scale.scale(0.15,0.15);
 		rotate.setIdentity();
-		rotate.setRotation(0,0,t*0.08);
+		rotate.setRotation(0,0,t*(0.017));
 		translate.setIdentity();
 		translate.setTranslation(0.3,0);
 		revolve.setIdentity();
-		revolve.setRotation(0,0,t);
+		revolve.setRotation(0,0,t*(0.011));
 
 		transform.setIdentity();
 		transform = baseTransform * revolve * translate * rotate * scale;
@@ -316,11 +318,11 @@ int main() {
 		scale.setIdentity();
 		scale.scale(0.25,0.25);
 		rotate.setIdentity();
-		rotate.setRotation(0,0,t*2);
+		rotate.setRotation(0,0,t*(-0.004));
 		translate.setIdentity();
 		translate.setTranslation(0.4,0);
 		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.85);
+		revolve.setRotation(0,0,t * 0.0046);
 
 		transform.setIdentity();
 		transform = baseTransform * revolve * translate * rotate * scale;
@@ -331,11 +333,11 @@ int main() {
 		scale.setIdentity();
 		scale.scale(0.27,0.27);
 		rotate.setIdentity();
-		rotate.setRotation(0,0,t*1.9);
+		rotate.setRotation(0,0,t);
 		translate.setIdentity();
 		translate.setTranslation(0.55,0);
 		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.80);
+		revolve.setRotation(0,0,t * 0.0027);
 
 		transform.setIdentity();
 		transform = baseTransform * revolve * translate * rotate * scale;
@@ -343,16 +345,16 @@ int main() {
 		glDrawArrays(GL_TRIANGLE_FAN, cPoints*3, cPoints);
 
 		//Moon
-		scale.setIdentity();
-		scale.scale(0.11,0.11);
-		rotate.setIdentity();
-		rotate.setRotation(0,0,t*0.8);
-		translate.setIdentity();
-		translate.setTranslation(0.25,0);
-		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.40);
+		moonScale.setIdentity();
+		moonScale.scale(0.05,0.05);
+		moonRotate.setIdentity();
+		moonRotate.setRotation(0,0,t*0.036);
+		moonTranslate.setIdentity();
+		moonTranslate.setTranslation(0.07,0);
+		moonRevolve.setIdentity();
+		moonRevolve.setRotation(0,0,t * 0.033);
 
-		transform = transform * revolve * translate * rotate * scale;
+		transform = baseTransform * revolve * translate * moonRevolve * moonTranslate * moonRotate * moonScale;
 		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
 		glDrawArrays(GL_TRIANGLE_FAN, cPoints*4, cPoints);
 
@@ -360,11 +362,11 @@ int main() {
 		scale.setIdentity();
 		scale.scale(0.19,0.19);
 		rotate.setIdentity();
-		rotate.setRotation(0,0,t*1.5);
+		rotate.setRotation(0,0,t*1.03);
 		translate.setIdentity();
 		translate.setTranslation(0.72,0);
 		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.60);
+		revolve.setRotation(0,0,t * 0.00146);
 
 		transform.setIdentity();
 		transform = baseTransform * revolve * translate * rotate * scale;
@@ -375,11 +377,11 @@ int main() {
 		scale.setIdentity();
 		scale.scale(0.75,0.75);
 		rotate.setIdentity();
-		rotate.setRotation(0,0,t);
+		rotate.setRotation(0,0,t*2.41);
 		translate.setIdentity();
 		translate.setTranslation(1.1,0);
 		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.60);
+		revolve.setRotation(0,0,t * 0.00023);
 
 		transform.setIdentity();
 		transform = baseTransform * revolve * translate * rotate * scale;
@@ -390,11 +392,11 @@ int main() {
 		scale.setIdentity();
 		scale.scale(0.70,0.70);
 		rotate.setIdentity();
-		rotate.setRotation(0,0,t*0.9);
+		rotate.setRotation(0,0,t*2.25);
 		translate.setIdentity();
 		translate.setTranslation(1.4,0);
 		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.50);
+		revolve.setRotation(0,0,t * 0.000092);
 
 		transform.setIdentity();
 		transform = baseTransform * revolve * translate * rotate * scale;
@@ -405,11 +407,11 @@ int main() {
 		scale.setIdentity();
 		scale.scale(0.62,0.62);
 		rotate.setIdentity();
-		rotate.setRotation(0,0,t*0.8);
+		rotate.setRotation(0,0,t*-1.39);
 		translate.setIdentity();
 		translate.setTranslation(1.65,0);
 		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.35);
+		revolve.setRotation(0,0,t * 0.000033);
 
 		transform.setIdentity();
 		transform = baseTransform * revolve * translate * rotate * scale;
@@ -420,11 +422,11 @@ int main() {
 		scale.setIdentity();
 		scale.scale(0.58,0.58);
 		rotate.setIdentity();
-		rotate.setRotation(0,0,t*0.77);
+		rotate.setRotation(0,0,t*1.486);
 		translate.setIdentity();
 		translate.setTranslation(2,0);
 		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.2);
+		revolve.setRotation(0,0,t * 0.000017);
 
 		transform.setIdentity();
 		transform = baseTransform * revolve * translate * rotate * scale;
@@ -432,7 +434,7 @@ int main() {
 		glDrawArrays(GL_TRIANGLE_FAN, cPoints*9, cPoints);
 		
 		glfwSwapBuffers();
-		t += 0.02f;
+		t += 15;
 	} while ( glfwGetKey(GLFW_KEY_ESC) != GLFW_PRESS && glfwGetWindowParam(GLFW_OPENED) );
 	glfwTerminate();
 	
