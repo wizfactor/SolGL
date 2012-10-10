@@ -21,7 +21,7 @@ GLuint totalPoints = (int) 10 * cPoints; //1 sun + 8 planets + 1 moon
 //Colors are in BGR order
 const GLuint RED =  0x0000FF;
 const GLuint BLUE = 0xFF0000;
-const GLuint DARK_BLUE = 0x000099;
+const GLuint DARK_BLUE = 0x990000;
 const GLuint GREEN = 0x00FF00;
 const GLuint YELLOW = 0x00FFFF;
 const GLuint ORANGE = 0x3366FF;
@@ -33,7 +33,7 @@ const GLuint PALE_YELLOW = 0x99FFFF;
 const GLuint LIGHT_TORQUOISE = 0xFFFFF33;
 const GLuint DARK_TORQUOISE = 0x999900;
 
-const GLfloat radius = 0.2;
+const GLfloat radius = 0.1;
 
 struct GLMatrix3 {
 	GLfloat mat[9];
@@ -145,8 +145,8 @@ void createCircle(Vtx t[], GLuint start, GLuint end, GLuint color1, GLuint color
 
 	//bool alternate = true;
 
-	for(int i = start+1; i < end-2; ++i) { //USE THIS TO SHOW OBJETS ARE ROTATING
-	//for(int i = start+1; i < end; ++i) {
+	//for(int i = start+1; i < end-2; ++i) { //USE THIS TO SHOW OBJETS ARE ROTATING
+	for(int i = start+1; i < end; ++i) {
 		t[i].x = (radius * cos(rad));
 		t[i].y = (radius * sin(rad));
 		t[i].color = color1;
@@ -387,10 +387,49 @@ int main() {
 		glDrawArrays(GL_TRIANGLE_FAN, cPoints*6, cPoints);
 
 		//Saturn
+		scale.setIdentity();
+		scale.scale(0.70,0.70);
+		rotate.setIdentity();
+		rotate.setRotation(0,0,t*0.9);
+		translate.setIdentity();
+		translate.setTranslation(1.4,0);
+		revolve.setIdentity();
+		revolve.setRotation(0,0,t * 0.50);
 
+		transform.setIdentity();
+		transform = baseTransform * revolve * translate * rotate * scale;
+		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
+		glDrawArrays(GL_TRIANGLE_FAN, cPoints*7, cPoints);
+		
 		//Uranus
+		scale.setIdentity();
+		scale.scale(0.62,0.62);
+		rotate.setIdentity();
+		rotate.setRotation(0,0,t*0.8);
+		translate.setIdentity();
+		translate.setTranslation(1.65,0);
+		revolve.setIdentity();
+		revolve.setRotation(0,0,t * 0.35);
+
+		transform.setIdentity();
+		transform = baseTransform * revolve * translate * rotate * scale;
+		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
+		glDrawArrays(GL_TRIANGLE_FAN, cPoints*8, cPoints);
 
 		//Neptune
+		scale.setIdentity();
+		scale.scale(0.58,0.58);
+		rotate.setIdentity();
+		rotate.setRotation(0,0,t*0.77);
+		translate.setIdentity();
+		translate.setTranslation(2,0);
+		revolve.setIdentity();
+		revolve.setRotation(0,0,t * 0.2);
+
+		transform.setIdentity();
+		transform = baseTransform * revolve * translate * rotate * scale;
+		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
+		glDrawArrays(GL_TRIANGLE_FAN, cPoints*9, cPoints);
 		
 		glfwSwapBuffers();
 		t += 0.02f;
