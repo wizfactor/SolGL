@@ -35,6 +35,9 @@ const GLuint DARK_TORQUOISE = 0x999900;
 
 const GLfloat radius = 0.1;
 
+GLuint MAT_ID;
+GLuint TEX_ID;
+
 struct GLMatrix3 {
 	GLfloat mat[9];
 	
@@ -181,6 +184,38 @@ void createAxes(Vtx t[]) {
 	t[cPoints * 10 + 3].color = GREEN;
 }
 
+GLMatrix3 draw(GLMatrix3 baseTransform, float sc, float rot, float tran, float rev, GLuint ind, bool axes) {
+	GLMatrix3 transform, scale, rotate, revolve, translate, rotateInverse;
+	
+	scale.setIdentity();
+	scale.scale(sc,sc);
+	rotate.setIdentity();
+	rotate.setRotation(0,0,rot);
+	translate.setIdentity();
+	translate.setTranslation(tran,0);
+	revolve.setIdentity();
+	revolve.setRotation(0,0,rev);
+
+	//Counteract the extra rotation caused by revolution
+	rotateInverse = revolve;
+	rotateInverse.transpose();
+
+	transform.setIdentity();
+	transform = baseTransform * revolve * translate * rotateInverse * rotate * scale;
+	glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
+	glDrawArrays(GL_TRIANGLE_FAN, cPoints * ind, cPoints);
+
+	//Code block for showing axes
+	if(axes) {
+		glDrawArrays(GL_LINES, cPoints*10, 2);	
+		glDrawArrays(GL_LINES, cPoints*10 + 2, 2);	
+	}	
+
+	//This returned matrix is to be used exclusively for moon-related transformations
+	transform = baseTransform * revolve * translate * rotateInverse;
+	return transform;
+}
+
 int main() {
 	if ( !glfwInit() ) {
 		cerr << "Unable to initialize OpenGL!\n";
@@ -264,8 +299,8 @@ int main() {
 
 	glVertexAttribPointer(ATTRIB_POS, 2, GL_FLOAT, GL_FALSE, sizeof(Vtx), &vertices[0].x);
 	glVertexAttribPointer(ATTRIB_COLOR, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vtx), &vertices[0].color);
-	GLuint MAT_ID = glGetUniformLocation(program,"modelTransform");
-	GLuint TEX_ID = glGetUniformLocation(program,"texUnit0");
+	MAT_ID = glGetUniformLocation(program,"modelTransform");
+	TEX_ID = glGetUniformLocation(program,"texUnit0");
 
 	glUseProgram(program);
 
@@ -276,18 +311,11 @@ int main() {
 	glLoadIdentity();
 	
 	GLfloat t = 0;	
-	GLfloat moveY = 0, moveX = 0, scaleX = 0.4, scaleY = 0.4, rotT = 0, delta = 10;
+	GLfloat moveY = 0, moveX = 0, scaleX = 0.4, scaleY = 0.4, rotT = 0, delta = 5;
+	bool pause = false, toggle = false;
 
 	do {
 		glClear(GL_COLOR_BUFFER_BIT);
-		
-		GLMatrix3 baseTransform, transform, rotate, revolve, translate, scale,
-			moonScale, moonTranslate, moonRotate, moonRevolve, rotateInverse;
-
-
-		GLfloat t2 = t / 4;
-
-		transform.setIdentity();
 
 		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS) {
 			if ( glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS ) {
@@ -319,10 +347,21 @@ int main() {
 					delta -= 0.01;
 				}
 			} 
-			if (glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) {
+			else if (glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) {
 				delta += 0.01;
 			}
 
+		}
+		else if (glfwGetKey(GLFW_KEY_RALT) == GLFW_PRESS) {
+			if(glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) {
+				toggle = false;
+			} else if (glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) {
+				toggle = true;
+			} else if (glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS) {
+				pause = false;
+			} else if (glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS) {
+				pause = true;
+			}
 		}
 		else {
 			if ( glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS ) {
@@ -342,210 +381,52 @@ int main() {
 			moveY = 0, moveX = 0, scaleX = 0.4, scaleY = 0.4, rotT = 0, t = 0;
 		}
 
+		GLMatrix3 baseTransform, sunRot, moonTransform;
+
 		//The Sun
 		baseTransform.setIdentity();
 		baseTransform.scale(scaleX,scaleY);
 		baseTransform.translate(moveX,moveY);
-		rotate.setRotation(0,0,rotT);
+		sunRot.setIdentity();
+		sunRot.setRotation(0,0,rotT);
 
-		baseTransform = rotate * baseTransform;
+		baseTransform = sunRot * baseTransform;
 
 		glUniformMatrix3fv(MAT_ID, 1, false, baseTransform.mat);
 		glDrawArrays(GL_TRIANGLE_FAN, 0, cPoints);	
-		
+
 		//Mercury
-		scale.setIdentity();
-		scale.scale(0.15,0.15);
-		rotate.setIdentity();
-		rotate.setRotation(0,0,t*(0.017));
-		translate.setIdentity();
-		translate.setTranslation(0.3,0);
-		revolve.setIdentity();
-		revolve.setRotation(0,0,t*(0.011));
+		draw(baseTransform, 0.15, t*(0.017), 0.3, t*(0.011), 1, toggle);
 
-		//Counteract the extra rotation caused by revolution
-		rotateInverse = revolve;
-		rotateInverse.transpose();
-
-		transform.setIdentity();
-		transform = baseTransform * revolve * translate * rotateInverse * rotate * scale;
-		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_FAN, cPoints, cPoints);
-
-		//Code block for showing axes
-		glDrawArrays(GL_LINES, cPoints*10, 2);	
-		glDrawArrays(GL_LINES, cPoints*10 + 2, 2);	
-		
-		
 		//Venus
-		scale.setIdentity();
-		scale.scale(0.25,0.25);
-		rotate.setIdentity();
-		rotate.setRotation(0,0,t*(-0.004));
-		translate.setIdentity();
-		translate.setTranslation(0.4,0);
-		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.0046);
-
-		rotateInverse = revolve;
-		rotateInverse.transpose();
-
-		transform.setIdentity();
-		transform = baseTransform * revolve * translate * rotateInverse * rotate * scale;
-		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_FAN, cPoints*2, cPoints);
-
-		glDrawArrays(GL_LINES, cPoints*10, 2);	
-		glDrawArrays(GL_LINES, cPoints*10 + 2, 2);	
+		draw(baseTransform, 0.25, t*(-0.004), 0.4, t * 0.0046, 2, toggle);
 
 		//Earth
-		scale.setIdentity();
-		scale.scale(0.27,0.27);
-		rotate.setIdentity();
-		rotate.setRotation(0,0,t);
-		translate.setIdentity();
-		translate.setTranslation(0.55,0);
-		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.0027);
-
-		rotateInverse = revolve;
-		rotateInverse.transpose();
-
-		transform.setIdentity();
-		transform = baseTransform * revolve * translate * rotateInverse * rotate * scale;
-		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_FAN, cPoints*3, cPoints);
-
-		glDrawArrays(GL_LINES, cPoints*10, 2);	
-		glDrawArrays(GL_LINES, cPoints*10 + 2, 2);	
+		moonTransform = draw(baseTransform, 0.27, t, 0.55, t * 0.0027, 3, toggle);
 
 		//Moon
-		moonScale.setIdentity();
-		moonScale.scale(0.05,0.05);
-		moonRotate.setIdentity();
-		moonRotate.setRotation(0,0,t*0.036);
-		moonTranslate.setIdentity();
-		moonTranslate.setTranslation(0.07,0);
-		moonRevolve.setIdentity();
-		moonRevolve.setRotation(0,0,t * 0.033);
-
-		rotateInverse = moonRevolve;
-		rotateInverse.transpose();
-
-		transform = baseTransform * revolve * translate * moonRevolve * moonTranslate * rotateInverse * moonRotate * moonScale;
-		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_FAN, cPoints*4, cPoints);
-
-		glDrawArrays(GL_LINES, cPoints*10, 2);	
-		glDrawArrays(GL_LINES, cPoints*10 + 2, 2);	
+		draw(moonTransform, 0.05, t*0.036, 0.07, t * 0.033, 4, toggle);		
 
 		//Mars
-		scale.setIdentity();
-		scale.scale(0.19,0.19);
-		rotate.setIdentity();
-		rotate.setRotation(0,0,t*1.03);
-		translate.setIdentity();
-		translate.setTranslation(0.72,0);
-		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.00146);
-
-		rotateInverse = revolve;
-		rotateInverse.transpose();
-
-		transform.setIdentity();
-		transform = baseTransform * revolve * translate * rotateInverse * rotate * scale;
-		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_FAN, cPoints*5, cPoints);
-
-		glDrawArrays(GL_LINES, cPoints*10, 2);	
-		glDrawArrays(GL_LINES, cPoints*10 + 2, 2);	
+		draw(baseTransform, 0.19, t*(1.03), 0.72, t * 0.00146, 5, toggle);
 
 		//Jupiter
-		scale.setIdentity();
-		scale.scale(0.75,0.75);
-		rotate.setIdentity();
-		rotate.setRotation(0,0,t*2.41);
-		translate.setIdentity();
-		translate.setTranslation(1.1,0);
-		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.00023);
-
-		rotateInverse = revolve;
-		rotateInverse.transpose();
-
-		transform.setIdentity();
-		transform = baseTransform * revolve * translate * rotateInverse * rotate * scale;
-		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_FAN, cPoints*6, cPoints);
-
-		glDrawArrays(GL_LINES, cPoints*10, 2);	
-		glDrawArrays(GL_LINES, cPoints*10 + 2, 2);	
+		draw(baseTransform, 0.75, t*(2.41), 1.1, t * 0.00023, 6, toggle);
 
 		//Saturn
-		scale.setIdentity();
-		scale.scale(0.70,0.70);
-		rotate.setIdentity();
-		rotate.setRotation(0,0,t*2.25);
-		translate.setIdentity();
-		translate.setTranslation(1.4,0);
-		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.000092);
+		draw(baseTransform, 0.70, t*(2.25), 1.4, t * 0.000092, 7, toggle);
 
-		rotateInverse = revolve;
-		rotateInverse.transpose();
-
-		transform.setIdentity();
-		transform = baseTransform * revolve * translate * rotateInverse * rotate * scale;
-		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_FAN, cPoints*7, cPoints);
-
-		glDrawArrays(GL_LINES, cPoints*10, 2);	
-		glDrawArrays(GL_LINES, cPoints*10 + 2, 2);	
-		
 		//Uranus
-		scale.setIdentity();
-		scale.scale(0.62,0.62);
-		rotate.setIdentity();
-		rotate.setRotation(0,0,t*-1.39);
-		translate.setIdentity();
-		translate.setTranslation(1.65,0);
-		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.000033);
+		draw(baseTransform, 0.62, t*(-1.39), 1.65, t * 0.000033, 8, toggle);
 
-		rotateInverse = revolve;
-		rotateInverse.transpose();
-
-		transform.setIdentity();
-		transform = baseTransform * revolve * translate * rotateInverse * rotate * scale;
-		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_FAN, cPoints*8, cPoints);
-
-		glDrawArrays(GL_LINES, cPoints*10, 2);	
-		glDrawArrays(GL_LINES, cPoints*10 + 2, 2);	
-
-		//Neptune
-		scale.setIdentity();
-		scale.scale(0.58,0.58);
-		rotate.setIdentity();
-		rotate.setRotation(0,0,t*1.486);
-		translate.setIdentity();
-		translate.setTranslation(2,0);
-		revolve.setIdentity();
-		revolve.setRotation(0,0,t * 0.000017);
-
-		rotateInverse = revolve;
-		rotateInverse.transpose();
-
-		transform.setIdentity();
-		transform = baseTransform * revolve * translate * rotateInverse * rotate * scale;
-		glUniformMatrix3fv(MAT_ID, 1, false, transform.mat);
-		glDrawArrays(GL_TRIANGLE_FAN, cPoints*9, cPoints);
-
-		glDrawArrays(GL_LINES, cPoints*10, 2);	
-		glDrawArrays(GL_LINES, cPoints*10 + 2, 2);	
+		//Neputune
+		draw(baseTransform, 0.58, t*(1.486), 2, t * 0.000017, 9, toggle);
 		
 		glfwSwapBuffers();
-		t += delta;
+
+		if(!pause) {
+			t += delta;
+		}
 	} while ( glfwGetKey(GLFW_KEY_ESC) != GLFW_PRESS && glfwGetWindowParam(GLFW_OPENED) );
 	glfwTerminate();
 	
